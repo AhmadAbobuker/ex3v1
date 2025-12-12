@@ -28,17 +28,9 @@ int final_round=ROWS*COLS ;
 ///////////////////////////////////
 ///
 
-
-
-
-
-
 ///////////////////////////////////////
 ///    board designing tool
 void design_board(int board[ROWS][COLS*2+1]) {
-
-
-
 //filling the array logic
 for (int row = 0; row < ROWS; row++) {
     for (int col = 0; col < COLS*2+1; col++) {
@@ -51,10 +43,6 @@ for (int row = 0; row < ROWS; row++) {
 
 
 }
-////////////////////////////////////////
-///
-
-
 ////////////////////////////////////////
 ///     PrintBoard
 void print_board() {
@@ -71,15 +59,6 @@ void print_board() {
     }
 
 }
-
-
-
-
-
-
-
-
-
 ////////////////////////////////////////
 ///        Player Type Handler
 int get_player_type(int player_number) {
@@ -94,7 +73,6 @@ int get_player_type(int player_number) {
             printf("Invalid selection. Enter h or c.\n");
         while (getchar() != '\n');
     }
-
 /*Although the code isn't optimal
  *im trying to match the assignment input outputs expectations,
  *so I didn't optimize it more,
@@ -102,16 +80,6 @@ int get_player_type(int player_number) {
  *to check each char individually and check smartly , but for the given assignment ill settle for that
  */
 }
-////////////////////////////////////////
-////
-
-
-
-
-
-
-
-
 //////////////////////////////////////
 ///      The Game design
 void GameBody(){
@@ -120,8 +88,6 @@ printf("Connect Four (%d rows x %d cols)\n" , ROWS, COLS);
 //    get_player_type();
 //printf("Choose type for player 2: h - human, c - computer:" );
 //    get_player_type();
-
-
 }
 ////////////////////////////////////////
 ///
@@ -162,8 +128,6 @@ int sim_move(int col_idx, int token, int target_len) {
     board[r][col_idx] = EMPTY;
     return 0;
 }
-
-
 
 ////////////////////////////////////////
 ///  AI Logic
@@ -265,16 +229,7 @@ int my_token = TOKEN_P2;   // Computer is 'O'
         }
     }
     return 0;
-
-
-
-
 }
-////////////////////////////////////////
-///
-
-
-
 ///////////////////////////////////////
 ///    Human Logic
 void human_play(int round) {
@@ -466,11 +421,6 @@ for (col = 1; col < COLS*2+1; col=col+2) {
 
 
 }
-
-
-
-
-
 
 int main() {
     GameBody();
