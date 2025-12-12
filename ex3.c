@@ -1,10 +1,13 @@
+/* Name: ahmad abu bkr
+ID: 213109192
+   Assignment: ex3*/
 #include <stdio.h>
 #ifndef ROWS
-#define ROWS 4
+#define ROWS 6
 #endif
 
 #ifndef COLS
-#define COLS 4
+#define COLS 7
 #endif
 
 #define CONNECT_N 4
