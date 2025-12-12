@@ -1,13 +1,8 @@
 /* Name: ahmad abu bkr
 ID: 213109192
    Assignment: ex3*/
-
-
-
-//in this code i have rewritten all the functions manually to something more readilbe to me
-// when it comes to columns and rows i have treated them as a complete array so columns are realy on the place
-//*2+1 of the real number , couldve been handled in a sepreate array but i prefered that way
 #include <stdio.h>
+
 #ifndef ROWS
 #define ROWS 6
 #endif
@@ -18,7 +13,6 @@ ID: 213109192
 
 #define CONNECT_N 4
 
-/* Tokens */
 #define EMPTY '.'
 #define TOKEN_P1 'X'
 #define TOKEN_P2 'O'
@@ -28,102 +22,75 @@ ID: 213109192
 
 #define BORDER '|'
 
-//////////////////////////////////
-///      Global Variables
 int board[ROWS][COLS * 2 + 1];
-int current_player_type ;
-int player1 , player2 ;
-int final_round=ROWS*COLS ;
-///////////////////////////////////
-///
+int current_player_type;
+int player1, player2;
+int final_round = ROWS * COLS;
 
-///////////////////////////////////////
-///    board designing tool
-void design_board(int board[ROWS][COLS*2+1]) {
-//filling the array logic
-for (int row = 0; row < ROWS; row++) {
-    for (int col = 0; col < COLS*2+1; col++) {
-        board[row][col] = BORDER;
-        board[row][col+1] = EMPTY;
-        col++;
+void design_board(int board[ROWS][COLS * 2 + 1]) {
+    for (int row = 0; row < ROWS; row++) {
+        for (int col = 0; col < COLS * 2 + 1; col++) {
+            board[row][col] = BORDER;
+            board[row][col + 1] = EMPTY;
+            col++;
+        }
     }
 }
 
-
-
-}
-////////////////////////////////////////
-///     PrintBoard
 void print_board() {
-    //printing the board
+    printf("\n");
     for (int row = 0; row < ROWS; row++) {
-        for (int col = 0; col < COLS*2+1; col++) {
+        for (int col = 0; col < COLS * 2 + 1; col++) {
             printf("%c", board[row][col]);
         }
         printf("\n");
-
     }
-    for (int col = 0; col < COLS ;col++) {
-        printf(" %d" ,col+1);
+    for (int col = 0; col < COLS; col++) {
+        printf(" %d", (col + 1) % 10);
     }
-
+    printf("\n\n");
 }
-////////////////////////////////////////
-///        Player Type Handler
+
 int get_player_type(int player_number) {
-    char playertype ;
-    printf("Choose type for player %d: h - human, c - computer: " ,player_number );
+    char playertype;
     while (1) {
-        scanf(" %c", &playertype);
-        if (playertype =='c' || playertype =='C')   return COMPUTER;
-
-        if (playertype =='h' || playertype =='H')   return HUMAN;
-
-            printf("Invalid selection. Enter h or c.\n");
+        printf("Choose type for player %d: h - human, c - computer: ", player_number);
+        int scanned = scanf(" %c", &playertype);
+        if (scanned != 1) {
+             while (getchar() != '\n');
+             continue;
+        }
+        if (playertype == 'c' || playertype == 'C') return COMPUTER;
+        if (playertype == 'h' || playertype == 'H') return HUMAN;
+        printf("Invalid selection. Enter h or c.\n");
         while (getchar() != '\n');
     }
-/*Although the code isn't optimal
- *im trying to match the assignment input outputs expectations,
- *so I didn't optimize it more,
- *although I would've preferred a function that would have an array of chars
- *to check each char individually and check smartly , but for the given assignment ill settle for that
- */
 }
-//////////////////////////////////////
-///      The Game design
-void GameBody(){
-printf("Connect Four (%d rows x %d cols)\n" , ROWS, COLS);
+
+void GameBody() {
+    printf("Connect Four (%d rows x %d cols)\n\n", ROWS, COLS);
 }
-////////////////////////////////////////
-///
+
 int sim_move(int col_idx, int token, int target_len) {
-    // 1. Find the row where the token would land (Gravity)
     int r = -1;
     for (int i = ROWS - 1; i >= 0; i--) {
-        if (board[i][col_idx] == EMPTY) {
-            r = i;
-            break;
-        }
+        if (board[i][col_idx] == EMPTY) { r = i; break; }
     }
-    if (r == -1) return 0; // Column is full
+    if (r == -1) return 0;
 
-    // 2. Place the token temporarily
     board[r][col_idx] = token;
 
-    // 3. Check all 4 directions
     int dr[] = {0, 1, 1, 1};
-    int dc[] = {2, 0, 2, -2}; // Visual board steps
+    int dc[] = {2, 0, 2, -2};
 
     for (int d = 0; d < 4; d++) {
         int count = 1;
-        // Positive direction
         for (int i = 1; i < target_len; i++) {
             int nr = r + dr[d] * i;
             int nc = col_idx + dc[d] * i;
             if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS*2+1 && board[nr][nc] == token) count++;
             else break;
         }
-        // Negative direction
         for (int i = 1; i < target_len; i++) {
             int nr = r - dr[d] * i;
             int nc = col_idx - dc[d] * i;
@@ -135,32 +102,23 @@ int sim_move(int col_idx, int token, int target_len) {
             return 1;
         }
     }
-
     board[r][col_idx] = EMPTY;
     return 0;
 }
 
-////////////////////////////////////////
-///  AI Logic
 int ai_play(int round) {
     int my_token = (round % 2 == 0) ? TOKEN_P1 : TOKEN_P2;
     int opp_token = (round % 2 == 0) ? TOKEN_P2 : TOKEN_P1;
 
-    // PRE-CALCULATE ORDER (Center -> Outwards)
     int order[COLS];
     for(int i=0; i<COLS; i++) order[i] = i+1;
 
-    // Bubble sort columns by distance from center
     for(int i=0; i<COLS-1; i++) {
         for(int j=0; j<COLS-i-1; j++) {
              int c1 = order[j];
              int c2 = order[j+1];
-
-             // Distance logic
              int d1 = (2*c1 - (COLS+1)); if (d1 < 0) d1 = -d1;
              int d2 = (2*c2 - (COLS+1)); if (d2 < 0) d2 = -d2;
-
-             // If dist is equal, prefer smaller (left) column
              if (d1 > d2 || (d1 == d2 && c1 > c2)) {
                  int temp = order[j];
                  order[j] = order[j+1];
@@ -169,7 +127,6 @@ int ai_play(int round) {
         }
     }
 
-    // --- Priority 1: Win Now ---
     for (int i = 0; i < COLS; i++) {
         int c = order[i];
         int idx = (c - 1) * 2 + 1;
@@ -182,7 +139,6 @@ int ai_play(int round) {
         }
     }
 
-    // --- Priority 2: Block Opponent ---
     for (int i = 0; i < COLS; i++) {
         int c = order[i];
         int idx = (c - 1) * 2 + 1;
@@ -195,7 +151,6 @@ int ai_play(int round) {
         }
     }
 
-    // --- Priority 3: Create Sequence of 3 ---
     for (int i = 0; i < COLS; i++) {
         int c = order[i];
         int idx = (c - 1) * 2 + 1;
@@ -208,7 +163,6 @@ int ai_play(int round) {
         }
     }
 
-    // --- Priority 4: Block Opponent Sequence of 3 ---
     for (int i = 0; i < COLS; i++) {
         int c = order[i];
         int idx = (c - 1) * 2 + 1;
@@ -221,7 +175,6 @@ int ai_play(int round) {
         }
     }
 
-    // --- Priority 5: Pick First Valid Column (in Center Order) ---
     for (int i = 0; i < COLS; i++) {
         int c = order[i];
         int idx = (c - 1) * 2 + 1;
@@ -235,8 +188,7 @@ int ai_play(int round) {
     }
     return 0;
 }
-///////////////////////////////////////
-///    Human Logic
+
 void human_play(int round) {
     int choice_column = 0;
     int col_index;
@@ -245,26 +197,21 @@ void human_play(int round) {
         printf("Enter column (1-%d): ", COLS);
         if (scanf("%d", &choice_column) != 1) {
             printf("Invalid input. Enter a number.\n");
-            while (getchar() != '\n'); // flush buffer
+            while (getchar() != '\n');
             continue;
         }
-        while (getchar() != '\n'); // flush buffer
-
         if (choice_column < 1 || choice_column > COLS) {
             printf("Invalid column. Choose between 1 and %d.\n", COLS);
             continue;
         }
-
-        col_index = (choice_column - 1) * 2 + 1; // map to board
+        col_index = (choice_column - 1) * 2 + 1;
         if (board[0][col_index] != EMPTY) {
-            printf("Column %d is full. Choose another.\n", choice_column);
+            printf("Column %d is full. Choose another column.\n", choice_column);
             continue;
         }
-
-        break; // valid choice
+        break;
     }
 
-    // Place token
     for (int i = ROWS - 1; i >= 0; i--) {
         if (board[i][col_index] == EMPTY) {
             if (round % 2 == 0)
@@ -276,169 +223,91 @@ void human_play(int round) {
     }
 }
 
-/////////////////////////////////////////
-///
 int victory_checker() {
-    //1. Horizontal Check (-)
-    int counter=0 ;
-for (int row = 0; row < ROWS; row++) {
-    counter=0;//cleaning the counter
-for (int col = 1; col < COLS*2+1; col=col+2) {
-if (board[row][col] == TOKEN_P1) {
-    counter++;
-    if (counter == CONNECT_N) {
-        return HUMAN;
-    }
-    if ((board[row][col+2] == TOKEN_P2)||(board[row][col+2] == EMPTY)) {
-        counter=0;
-    }
-}
-
-}
-
-
-}
-
-    for (int row = 0; row < ROWS; row++) {
-        counter=0 ; //cleaning the counter
-        for (int col = 1; col < COLS*2+1; col=col+2) {
-            if (board[row][col] == TOKEN_P2) {
-                counter++;
-                if (counter == CONNECT_N) {
-                    return COMPUTER ;
-                }
-                if ((board[row][col+2] == TOKEN_P1)||(board[row][col+2] == EMPTY)) {
-                    counter=0;
-                }
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 1; c < COLS * 2 + 1; c += 2) {
+            int token = board[r][c];
+            if (token == EMPTY) continue;
+            if (c + 6 < COLS * 2 + 1 &&
+                board[r][c+2] == token &&
+                board[r][c+4] == token &&
+                board[r][c+6] == token) {
+                return (token == TOKEN_P1) ? HUMAN : COMPUTER;
             }
-
         }
-
-
-    }
-    //3. Diagonal Down-Right (\)
-    int col=1 ;
-    counter=0 ;
-    for (int row2 = 0; row2 < ROWS; row2++) {
-        for (int row = row2; row < ROWS; row++) {
-            if  (board[row][col]==TOKEN_P1) {
-                counter++;
-            }else {
-                counter=0;
-            }
-            if (counter == CONNECT_N) {
-                return HUMAN;
-            }
-            col=col+2 ;
-        }
-        counter=0;
-        col=1 ;
-    }
-col=1;
-    counter=0 ;
-    for (int row2 = 0; row2 < ROWS; row2++) {
-        for (int row = row2; row < ROWS; row++) {
-            if  (board[row][col]==TOKEN_P2) {
-                counter++;
-            }else {
-                counter=0;
-            }
-            if (counter == CONNECT_N) {
-                return COMPUTER;
-            }
-            col=col+2 ;
-        }
-        counter=0;
-        col=1 ;
     }
 
-/////4. Diagonal Down-Left (/)
-    counter=0 ;
-    col=COLS*2-1;
-    for (int row2 = 0; row2 < ROWS; row2++) {
-        for (int row = row2; row < ROWS; row++) {
-            if  (board[row][col]==TOKEN_P1) {
-                counter++;
-            } else {
-                counter=0;
-            }
-            if (counter == CONNECT_N) {
-                return HUMAN;
-            }
-            col=col-2 ;
-        }
-        counter=0;
-        col=COLS*2-1 ;
-    }
-    col=COLS*2-1;
-    counter=0 ;
-    for (int row2 = 0; row2 < ROWS; row2++) {
-        for (int row =row2; row < ROWS; row++) {
-            if  (board[row][col]==TOKEN_P2) {
-                counter++;
-            }else {
-                counter=0;
-            }
-            if (counter == CONNECT_N) {
-                return COMPUTER;
-            }
-            col=col-2 ;
-        }
-        counter=0;
-        col=COLS*2-1 ;
-    }
-    // 2. Vertical Check (|)
     for (int r = 0; r <= ROWS - 4; r++) {
         for (int c = 1; c < COLS * 2 + 1; c += 2) {
             int token = board[r][c];
             if (token == EMPTY) continue;
-            // Check 3 slots down
             if (board[r+1][c] == token &&
                 board[r+2][c] == token &&
                 board[r+3][c] == token) {
                 return (token == TOKEN_P1) ? HUMAN : COMPUTER;
-                }
+            }
         }
     }
-    //In case of no returns which means no win ill return -1
-    return -1;
 
+    for (int r = 0; r <= ROWS - 4; r++) {
+        for (int c = 1; c < COLS * 2 + 1; c += 2) {
+            int token = board[r][c];
+            if (token == EMPTY) continue;
+            if (c + 6 < COLS * 2 + 1 &&
+                board[r+1][c+2] == token &&
+                board[r+2][c+4] == token &&
+                board[r+3][c+6] == token) {
+                return (token == TOKEN_P1) ? HUMAN : COMPUTER;
+            }
+        }
+    }
+
+    for (int r = 0; r <= ROWS - 4; r++) {
+        for (int c = 1; c < COLS * 2 + 1; c += 2) {
+            int token = board[r][c];
+            if (token == EMPTY) continue;
+            if (c - 6 >= 0 &&
+                board[r+1][c-2] == token &&
+                board[r+2][c-4] == token &&
+                board[r+3][c-6] == token) {
+                return (token == TOKEN_P1) ? HUMAN : COMPUTER;
+            }
+        }
+    }
+    return 0;
 }
 
 int main() {
     GameBody();
-    player1=get_player_type(1);
-    player2=get_player_type(2);
+    player1 = get_player_type(1);
+    player2 = get_player_type(2);
     design_board(board);
     print_board();
-    printf("\n") ;
 
-    for (int round=0;round<ROWS*COLS+1;round++) {
-if (round==final_round) {
-    printf("Board full and no winner. It's a tie!");
-    break;
-}
-
+    for (int round = 0; round < ROWS * COLS; round++) {
         current_player_type = (round % 2 == 0) ? player1 : player2;
-                              (round % 2 == 0) ? printf("Player 1 (X) turn.\n") : printf("Player 2 (O) turn.\n");
+
+        if(round % 2 == 0) printf("Player 1 (X) turn.\n");
+        else printf("Player 2 (O) turn.\n");
+
         if (current_player_type == COMPUTER) {
             ai_play(round);
         } else {
             human_play(round);
         }
         print_board();
-        printf("\n") ;
-        if (victory_checker()==1) {
-            printf("Player 1 (X) wins!");
-            break ;
-        }
-        if (victory_checker()==2) {
-            printf("Player 2 (O) wins!");
-            break;
-        }
 
-
+        int winner = victory_checker();
+        if (winner == HUMAN) {
+            printf("Player 1 (X) wins!\n");
+            return 0;
+        }
+        if (winner == COMPUTER) {
+            printf("Player 2 (O) wins!\n");
+            return 0;
+        }
     }
 
-
+    printf("Board full and no winner. It's a tie!\n");
+    return 0;
 }
