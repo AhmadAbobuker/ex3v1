@@ -289,7 +289,6 @@ if (board[row][col] == TOKEN_P1) {
 
 
 }
-    printf("");
 
     for (int row = 0; row < ROWS; row++) {
         counter=0 ; //cleaning the counter
