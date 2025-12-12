@@ -72,7 +72,7 @@ void print_board() {
 ///        Player Type Handler
 int get_player_type(int player_number) {
     char playertype ;
-    printf("Choose type for player %d: h - human, c - computer:" ,player_number );
+    printf("Choose type for player %d: h - human, c - computer: " ,player_number );
     while (1) {
         scanf(" %c", &playertype);
         if (playertype =='c' || playertype =='C')   return COMPUTER;
