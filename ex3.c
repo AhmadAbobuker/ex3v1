@@ -101,41 +101,68 @@ int sim_move(int col_idx, int token, int target_len) {
     // 2. Place the token temporarily
     board[r][col_idx] = token;
 
-    // 3. Check for the sequence
-    int count = 0;
+    // 3. Check all 4 directions
+    int dr[] = {0, 1, 1, 1};
+    int dc[] = {2, 0, 2, -2}; // Visual board steps
 
-    // Check Horizontal (-)
-    int c_start = col_idx;
-    while(c_start > 1 && board[r][c_start-2] == token) c_start -= 2; // Go far left
-    for (int i=0; i < target_len; i++) {
-        if (c_start + i*2 < COLS*2+1 && board[r][c_start + i*2] == token) count++;
-        else count = 0;
-        if (count == target_len) { board[r][col_idx] = EMPTY; return 1; }
+    for (int d = 0; d < 4; d++) {
+        int count = 1;
+        // Positive direction
+        for (int i = 1; i < target_len; i++) {
+            int nr = r + dr[d] * i;
+            int nc = col_idx + dc[d] * i;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS*2+1 && board[nr][nc] == token) count++;
+            else break;
+        }
+        // Negative direction
+        for (int i = 1; i < target_len; i++) {
+            int nr = r - dr[d] * i;
+            int nc = col_idx - dc[d] * i;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS*2+1 && board[nr][nc] == token) count++;
+            else break;
+        }
+        if (count >= target_len) {
+            board[r][col_idx] = EMPTY;
+            return 1;
+        }
     }
 
-    // Check Vertical (|)
-    count = 0;
-    // We only need to look down because we just placed the top piece
-    for (int i = 0; i < target_len; i++) {
-        if (r + i < ROWS && board[r+i][col_idx] == token) count++;
-        else break;
-    }
-    if (count == target_len) { board[r][col_idx] = EMPTY; return 1; }
     board[r][col_idx] = EMPTY;
     return 0;
 }
 
 ////////////////////////////////////////
 ///  AI Logic
-int ai_play(int round){
+int ai_play(int round) {
     int my_token = (round % 2 == 0) ? TOKEN_P1 : TOKEN_P2;
     int opp_token = (round % 2 == 0) ? TOKEN_P2 : TOKEN_P1;
 
-    // We check all priorities in order.
-    // As soon as we find a move, we make it and return.
+    // PRE-CALCULATE ORDER (Center -> Outwards)
+    int order[COLS];
+    for(int i=0; i<COLS; i++) order[i] = i+1;
 
-    // --- Priority 1: Win Now (4 in a row) ---
-    for (int c = 1; c <= COLS; c++) {
+    // Bubble sort columns by distance from center
+    for(int i=0; i<COLS-1; i++) {
+        for(int j=0; j<COLS-i-1; j++) {
+             int c1 = order[j];
+             int c2 = order[j+1];
+
+             // Distance logic
+             int d1 = (2*c1 - (COLS+1)); if (d1 < 0) d1 = -d1;
+             int d2 = (2*c2 - (COLS+1)); if (d2 < 0) d2 = -d2;
+
+             // If dist is equal, prefer smaller (left) column
+             if (d1 > d2 || (d1 == d2 && c1 > c2)) {
+                 int temp = order[j];
+                 order[j] = order[j+1];
+                 order[j+1] = temp;
+             }
+        }
+    }
+
+    // --- Priority 1: Win Now ---
+    for (int i = 0; i < COLS; i++) {
+        int c = order[i];
         int idx = (c - 1) * 2 + 1;
         if (sim_move(idx, my_token, 4)) {
             for (int r = ROWS - 1; r >= 0; r--) {
@@ -146,8 +173,9 @@ int ai_play(int round){
         }
     }
 
-    // --- Priority 2: Block Opponent Win (Prevent 4 in a row) ---
-    for (int c = 1; c <= COLS; c++) {
+    // --- Priority 2: Block Opponent ---
+    for (int i = 0; i < COLS; i++) {
+        int c = order[i];
         int idx = (c - 1) * 2 + 1;
         if (sim_move(idx, opp_token, 4)) {
             for (int r = ROWS - 1; r >= 0; r--) {
@@ -159,7 +187,8 @@ int ai_play(int round){
     }
 
     // --- Priority 3: Create Sequence of 3 ---
-    for (int c = 1; c <= COLS; c++) {
+    for (int i = 0; i < COLS; i++) {
+        int c = order[i];
         int idx = (c - 1) * 2 + 1;
         if (sim_move(idx, my_token, 3)) {
             for (int r = ROWS - 1; r >= 0; r--) {
@@ -171,7 +200,8 @@ int ai_play(int round){
     }
 
     // --- Priority 4: Block Opponent Sequence of 3 ---
-    for (int c = 1; c <= COLS; c++) {
+    for (int i = 0; i < COLS; i++) {
+        int c = order[i];
         int idx = (c - 1) * 2 + 1;
         if (sim_move(idx, opp_token, 3)) {
             for (int r = ROWS - 1; r >= 0; r--) {
@@ -182,46 +212,16 @@ int ai_play(int round){
         }
     }
 
-    // --- Priority 5: Pick Center (Ordering Rule) ---
-    // We scan columns from the center outwards: 4, 3, 5, 2, 6...
-    // Center column index
-    int center = (COLS + 1) / 2;
-
-    // Check Center First
-    int idx = (center - 1) * 2 + 1;
-    if (board[0][idx] == EMPTY) { // If top row is empty, column is valid
-         for (int r = ROWS - 1; r >= 0; r--) {
-             if (board[r][idx] == EMPTY) { board[r][idx] = my_token; break; }
-         }
-         printf("Computer chose column %d\n", center);
-         return 0;
-    }
-
-    // Expand outwards (offset 1, 2, 3...)
-    for (int dist = 1; dist < COLS; dist++) {
-        // Left side first (center - dist)
-        int left = center - dist;
-        if (left >= 1) {
-            idx = (left - 1) * 2 + 1;
-            if (board[0][idx] == EMPTY) {
-                for (int r = ROWS - 1; r >= 0; r--) {
-                    if (board[r][idx] == EMPTY) { board[r][idx] = my_token; break; }
-                }
-                printf("Computer chose column %d\n", left);
-                return 0;
+    // --- Priority 5: Pick First Valid Column (in Center Order) ---
+    for (int i = 0; i < COLS; i++) {
+        int c = order[i];
+        int idx = (c - 1) * 2 + 1;
+        if (board[0][idx] == EMPTY) {
+            for (int r = ROWS - 1; r >= 0; r--) {
+                if (board[r][idx] == EMPTY) { board[r][idx] = my_token; break; }
             }
-        }
-        // Right side second (center + dist)
-        int right = center + dist;
-        if (right <= COLS) {
-            idx = (right - 1) * 2 + 1;
-            if (board[0][idx] == EMPTY) {
-                for (int r = ROWS - 1; r >= 0; r--) {
-                    if (board[r][idx] == EMPTY) { board[r][idx] = my_token; break; }
-                }
-                printf("Computer chose column %d\n", right);
-                return 0;
-            }
+            printf("Computer chose column %d\n", c);
+            return 0;
         }
     }
     return 0;
@@ -379,39 +379,18 @@ col=1;
         counter=0;
         col=COLS*2-1 ;
     }
-///2. Vertical Check (|)
-counter=0;
-for (col = 1; col < COLS*2+1; col=col+2) {
-  for (int row2 = 0; row2 < ROWS; row2++) {
-      if  (board[row2][col]==TOKEN_P1) {
-          counter++;
-      }
-      if (counter == 4) {
-          return HUMAN;
-      }
-      if  ((board[row2+1][col] == TOKEN_P2)||(board[row2][col] == EMPTY)) {
-          counter=0;
-      }
-
-  }
-
-}
-
-    counter=0;
-    for (col = 1; col < COLS*2+1; col=col+2) {
-        for (int row2 = 0; row2 < ROWS; row2++) {
-            if  (board[row2][col]==TOKEN_P2) {
-                counter++;
-            }
-            if (counter == 4) {
-                return COMPUTER;
-            }
-            if  ((board[row2+1][col] == TOKEN_P1)||(board[row2][col] == EMPTY)) {
-                counter=0;
-            }
-
+    // 2. Vertical Check (|)
+    for (int r = 0; r <= ROWS - 4; r++) {
+        for (int c = 1; c < COLS * 2 + 1; c += 2) {
+            int token = board[r][c];
+            if (token == EMPTY) continue;
+            // Check 3 slots down
+            if (board[r+1][c] == token &&
+                board[r+2][c] == token &&
+                board[r+3][c] == token) {
+                return (token == TOKEN_P1) ? HUMAN : COMPUTER;
+                }
         }
-
     }
 
 
