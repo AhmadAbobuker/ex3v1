@@ -1,6 +1,12 @@
 /* Name: ahmad abu bkr
 ID: 213109192
    Assignment: ex3*/
+
+
+
+//in this code i have rewritten all the functions manually to something more readilbe to me
+// when it comes to columns and rows i have treated them as a complete array so columns are realy on the place
+//*2+1 of the real number , couldve been handled in a sepreate array but i prefered that way
 #include <stdio.h>
 #ifndef ROWS
 #define ROWS 6
@@ -280,7 +286,7 @@ for (int row = 0; row < ROWS; row++) {
 for (int col = 1; col < COLS*2+1; col=col+2) {
 if (board[row][col] == TOKEN_P1) {
     counter++;
-    if (counter == 4) {
+    if (counter == CONNECT_N) {
         return HUMAN;
     }
     if ((board[row][col+2] == TOKEN_P2)||(board[row][col+2] == EMPTY)) {
@@ -298,7 +304,7 @@ if (board[row][col] == TOKEN_P1) {
         for (int col = 1; col < COLS*2+1; col=col+2) {
             if (board[row][col] == TOKEN_P2) {
                 counter++;
-                if (counter == 4) {
+                if (counter == CONNECT_N) {
                     return COMPUTER ;
                 }
                 if ((board[row][col+2] == TOKEN_P1)||(board[row][col+2] == EMPTY)) {
@@ -320,7 +326,7 @@ if (board[row][col] == TOKEN_P1) {
             }else {
                 counter=0;
             }
-            if (counter == 4) {
+            if (counter == CONNECT_N) {
                 return HUMAN;
             }
             col=col+2 ;
@@ -337,7 +343,7 @@ col=1;
             }else {
                 counter=0;
             }
-            if (counter == 4) {
+            if (counter == CONNECT_N) {
                 return COMPUTER;
             }
             col=col+2 ;
@@ -356,7 +362,7 @@ col=1;
             } else {
                 counter=0;
             }
-            if (counter == 4) {
+            if (counter == CONNECT_N) {
                 return HUMAN;
             }
             col=col-2 ;
@@ -373,7 +379,7 @@ col=1;
             }else {
                 counter=0;
             }
-            if (counter == 4) {
+            if (counter == CONNECT_N) {
                 return COMPUTER;
             }
             col=col-2 ;
@@ -394,8 +400,8 @@ col=1;
                 }
         }
     }
-
-
+    //In case of no returns which means no win ill return -1
+    return -1;
 
 }
 
