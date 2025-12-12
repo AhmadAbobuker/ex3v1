@@ -1,10 +1,10 @@
 #include <stdio.h>
 #ifndef ROWS
-#define ROWS 6
+#define ROWS 4
 #endif
 
 #ifndef COLS
-#define COLS 7
+#define COLS 4
 #endif
 
 #define CONNECT_N 4
@@ -84,10 +84,6 @@ int get_player_type(int player_number) {
 ///      The Game design
 void GameBody(){
 printf("Connect Four (%d rows x %d cols)\n" , ROWS, COLS);
-//printf("Choose type for player 1: h - human, c - computer:" );
-//    get_player_type();
-//printf("Choose type for player 2: h - human, c - computer:" );
-//    get_player_type();
 }
 ////////////////////////////////////////
 ///
@@ -131,9 +127,9 @@ int sim_move(int col_idx, int token, int target_len) {
 
 ////////////////////////////////////////
 ///  AI Logic
-int ai_play(){
-int my_token = TOKEN_P2;   // Computer is 'O'
-    int opp_token = TOKEN_P1;  // Human is 'X'
+int ai_play(int round){
+    int my_token = (round % 2 == 0) ? TOKEN_P1 : TOKEN_P2;
+    int opp_token = (round % 2 == 0) ? TOKEN_P2 : TOKEN_P1;
 
     // We check all priorities in order.
     // As soon as we find a move, we make it and return.
@@ -293,7 +289,7 @@ if (board[row][col] == TOKEN_P1) {
 
 
 }
-    printf("\n");
+    printf("");
 
     for (int row = 0; row < ROWS; row++) {
         counter=0 ; //cleaning the counter
@@ -430,7 +426,6 @@ int main() {
     print_board();
     printf("\n") ;
 
-
     for (int round=0;round<ROWS*COLS+1;round++) {
 if (round==final_round) {
     printf("Board full and no winner. It's a tie!");
@@ -440,13 +435,12 @@ if (round==final_round) {
         current_player_type = (round % 2 == 0) ? player1 : player2;
                               (round % 2 == 0) ? printf("Player 1 (X) turn.\n") : printf("Player 2 (O) turn.\n");
         if (current_player_type == COMPUTER) {
-            ai_play();
+            ai_play(round);
         } else {
             human_play(round);
         }
         print_board();
-        printf("\n");
-
+        printf("\n") ;
         if (victory_checker()==1) {
             printf("Player 1 (X) wins!");
             break ;
@@ -455,7 +449,6 @@ if (round==final_round) {
             printf("Player 2 (O) wins!");
             break;
         }
-        printf("\n") ;
 
 
     }
